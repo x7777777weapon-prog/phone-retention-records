@@ -1,4 +1,4 @@
-const CACHE_NAME = "phone-retention-pwa-v3";
+const CACHE_NAME = "phone-retention-pwa-v4";
 const ASSETS = [
   "./",
   "./index.html",

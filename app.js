@@ -156,7 +156,7 @@ function render() {
       <td class="actions">
         <div class="row-actions">
           <button class="icon-button" type="button" title="编辑" aria-label="编辑" data-edit="${normalized.id}">✎</button>
-          <button class="calendar-button" type="button" title="加入 iPhone 日历提醒" aria-label="加入 iPhone 日历提醒" data-calendar="${normalized.id}">日历</button>
+          <button class="calendar-button" type="button" title="分享到 iPhone 日历" aria-label="分享到 iPhone 日历" data-calendar="${normalized.id}">日历</button>
           <button class="icon-button danger" type="button" title="删除" aria-label="删除" data-delete="${normalized.id}">×</button>
         </div>
       </td>
@@ -387,7 +387,7 @@ function normalizeRecord(item) {
   };
 }
 
-function downloadCalendarReminder(id) {
+async function downloadCalendarReminder(id) {
   const item = normalizeRecord(records.find((record) => record.id === id) || {});
   if (!item.phone || !item.expiryDate) return;
 
@@ -424,13 +424,28 @@ function downloadCalendarReminder(id) {
     "END:VCALENDAR"
   ].join("\\r\\n");
 
-  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `电话卡提醒-${sanitizeFileName(item.phone)}.ics`;
-  link.click();
-  URL.revokeObjectURL(url);
+  const fileName = `电话卡提醒-${sanitizeFileName(item.phone)}.ics`;
+  const file = new File([ics], fileName, { type: "text/calendar" });
+
+  if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+    try {
+      await navigator.share({
+        files: [file],
+        title: "电话卡保号提醒",
+        text: `${item.phone} 的保号日历提醒`
+      });
+      return;
+    } catch (error) {
+      if (error && error.name === "AbortError") return;
+    }
+  }
+
+  const encoded = encodeURIComponent(ics);
+  const dataUrl = `data:text/calendar;charset=utf-8,${encoded}`;
+  const win = window.open(dataUrl, "_blank");
+  if (!win) {
+    alert("请允许弹出窗口，或在 iPhone 上用 Safari 打开后再次点击“日历”。");
+  }
 }
 
 function getReminderDate(item) {
