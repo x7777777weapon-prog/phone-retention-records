@@ -9,6 +9,7 @@ const sampleRecords = [
     validityDays: "180",
     expiryDate: nextDate(18),
     reminderDays: "7",
+    reminderTime: "09:00",
     monthlyFee: "8",
     purpose: "银行卡验证",
     notes: "示例记录，可编辑或删除",
@@ -26,6 +27,7 @@ const billingStartDate = document.querySelector("#billingStartDate");
 const validityDays = document.querySelector("#validityDays");
 const expiryDate = document.querySelector("#expiryDate");
 const reminderDays = document.querySelector("#reminderDays");
+const reminderTime = document.querySelector("#reminderTime");
 const monthlyFee = document.querySelector("#monthlyFee");
 const purpose = document.querySelector("#purpose");
 const notes = document.querySelector("#notes");
@@ -92,6 +94,7 @@ function saveRecord(event) {
     validityDays: validityDays.value.trim(),
     expiryDate: expiryDate.value,
     reminderDays: reminderDays.value.trim() || "7",
+    reminderTime: reminderTime.value || "09:00",
     monthlyFee: monthlyFee.value.trim(),
     purpose: purpose.value.trim(),
     notes: notes.value.trim(),
@@ -139,6 +142,7 @@ function render() {
       <td class="actions">
         <div class="row-actions">
           <button class="icon-button" type="button" title="编辑" aria-label="编辑" data-edit="${normalized.id}">✎</button>
+          <button class="calendar-button" type="button" title="加入 iPhone 日历提醒" aria-label="加入 iPhone 日历提醒" data-calendar="${normalized.id}">日历</button>
           <button class="icon-button danger" type="button" title="删除" aria-label="删除" data-delete="${normalized.id}">×</button>
         </div>
       </td>
@@ -151,6 +155,9 @@ function render() {
   });
   recordsBody.querySelectorAll("[data-delete]").forEach((button) => {
     button.addEventListener("click", () => deleteRecord(button.dataset.delete));
+  });
+  recordsBody.querySelectorAll("[data-calendar]").forEach((button) => {
+    button.addEventListener("click", () => downloadCalendarReminder(button.dataset.calendar));
   });
 }
 
@@ -189,6 +196,7 @@ function editRecord(id) {
   validityDays.value = item.validityDays || calculateDays(item.billingStartDate || item.expiryDate, item.expiryDate) || "";
   expiryDate.value = item.expiryDate || calculateExpiry(item.billingStartDate, item.validityDays) || "";
   reminderDays.value = item.reminderDays || "7";
+  reminderTime.value = item.reminderTime || "09:00";
   monthlyFee.value = item.monthlyFee || "";
   purpose.value = item.purpose || "";
   notes.value = item.notes || "";
@@ -215,6 +223,7 @@ function resetForm() {
   recordId.value = "";
   carrier.value = "中国移动";
   reminderDays.value = "7";
+  reminderTime.value = "09:00";
   formTitle.textContent = "新增记录";
   submitButton.textContent = "保存记录";
   cancelEdit.classList.add("hidden");
@@ -247,6 +256,7 @@ function importRecords(event) {
         validityDays: String(item.validityDays || ""),
         expiryDate: String(item.expiryDate || ""),
         reminderDays: String(item.reminderDays || "7"),
+        reminderTime: String(item.reminderTime || "09:00"),
         monthlyFee: String(item.monthlyFee || ""),
         purpose: String(item.purpose || ""),
         notes: String(item.notes || ""),
@@ -281,7 +291,7 @@ function updateReminderBanner(items) {
 
   const top = due.slice(0, 3).map((item) => {
     const status = getStatus(item.expiryDate);
-    return `${item.phone} ${status.label}到期`;
+    return `${item.phone} ${status.label}到期，${getReminderDateText(item)} ${item.reminderTime || "09:00"}提醒`;
   });
   const rest = due.length > 3 ? `，另有${due.length - 3}张` : "";
   reminderText.textContent = `${top.join("；")}${rest}`;
@@ -334,8 +344,88 @@ function normalizeRecord(item) {
     billingStartDate: billing,
     validityDays: days,
     expiryDate: expiry,
-    reminderDays: item.reminderDays || "7"
+    reminderDays: item.reminderDays || "7",
+    reminderTime: item.reminderTime || "09:00"
   };
+}
+
+function downloadCalendarReminder(id) {
+  const item = normalizeRecord(records.find((record) => record.id === id) || {});
+  if (!item.phone || !item.expiryDate) return;
+
+  const reminderDate = getReminderDate(item);
+  const start = calendarDateTime(reminderDate, item.reminderTime || "09:00");
+  const endDate = new Date(start.date.getTime() + 30 * 60000);
+  const title = `电话卡保号提醒 ${item.phone}`;
+  const detail = [
+    `手机号：${item.phone}`,
+    `运营商：${item.carrier || "-"}`,
+    `到期日：${formatDate(item.expiryDate)}`,
+    `用途：${item.purpose || "-"}`,
+    `备注：${item.notes || "-"}`
+  ].join("\\n");
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Phone Retention Records//CN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    `UID:${item.id || crypto.randomUUID()}@phone-retention-records`,
+    `DTSTAMP:${toIcsDate(new Date())}`,
+    `DTSTART:${start.ics}`,
+    `DTEND:${toIcsDate(endDate)}`,
+    `SUMMARY:${escapeIcs(title)}`,
+    `DESCRIPTION:${escapeIcs(detail)}`,
+    "BEGIN:VALARM",
+    "ACTION:DISPLAY",
+    `DESCRIPTION:${escapeIcs(title)}`,
+    "TRIGGER:PT0M",
+    "END:VALARM",
+    "END:VEVENT",
+    "END:VCALENDAR"
+  ].join("\\r\\n");
+
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `电话卡提醒-${sanitizeFileName(item.phone)}.ics`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function getReminderDate(item) {
+  const date = new Date(`${item.expiryDate}T00:00:00`);
+  const days = Number.parseInt(item.reminderDays || "0", 10);
+  if (Number.isFinite(days)) date.setDate(date.getDate() - days);
+  return date;
+}
+
+function getReminderDateText(item) {
+  return dateToInputValue(getReminderDate(item));
+}
+
+function calendarDateTime(date, timeValue) {
+  const [hour = "9", minute = "0"] = String(timeValue || "09:00").split(":");
+  const local = new Date(date.getFullYear(), date.getMonth(), date.getDate(), Number(hour), Number(minute), 0);
+  return { date: local, ics: toIcsDate(local) };
+}
+
+function toIcsDate(date) {
+  return `${date.getUTCFullYear()}${String(date.getUTCMonth() + 1).padStart(2, "0")}${String(date.getUTCDate()).padStart(2, "0")}T${String(date.getUTCHours()).padStart(2, "0")}${String(date.getUTCMinutes()).padStart(2, "0")}${String(date.getUTCSeconds()).padStart(2, "0")}Z`;
+}
+
+function escapeIcs(value) {
+  return String(value)
+    .replaceAll("\\", "\\\\")
+    .replaceAll(";", "\\;")
+    .replaceAll(",", "\\,")
+    .replaceAll("\n", "\\n");
+}
+
+function sanitizeFileName(value) {
+  return String(value).replace(/[\\\\/:*?"<>|]/g, "-");
 }
 
 function getStatus(dateValue) {

@@ -36,7 +36,53 @@ textarea {
 
 .app-shell {
   min-height: 100vh;
-  padding: 28px;
+  padding: 104px 28px 28px;
+}
+
+.urgent-reminder {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 74px;
+  border-bottom: 1px solid #f3b3ac;
+  background: #fff0ee;
+  padding: max(12px, env(safe-area-inset-top)) 18px 12px;
+  box-shadow: 0 10px 28px rgba(120, 36, 25, 0.16);
+}
+
+.urgent-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.urgent-copy strong {
+  color: var(--danger);
+  font-size: 16px;
+}
+
+.urgent-copy span {
+  color: #6d2a21;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.urgent-button {
+  flex: 0 0 auto;
+  min-height: 38px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--danger);
+  color: white;
+  cursor: pointer;
+  font-weight: 800;
+  padding: 0 12px;
 }
 
 .topbar {
@@ -108,31 +154,6 @@ h2 {
 
 .summary-item.danger .summary-value {
   color: var(--danger);
-}
-
-.reminder-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  max-width: 1240px;
-  margin: 0 auto 18px;
-  border: 1px solid #f0c56a;
-  border-radius: 8px;
-  background: #fff8e8;
-  padding: 14px 16px;
-  box-shadow: var(--shadow);
-}
-
-.reminder-banner h2 {
-  margin-bottom: 4px;
-  color: var(--warn);
-}
-
-.reminder-banner p {
-  color: #5f4b1c;
-  font-size: 14px;
-  line-height: 1.45;
 }
 
 .workspace {
@@ -221,6 +242,12 @@ textarea:focus {
 
 .primary-button:hover {
   background: var(--accent-strong);
+}
+
+.form-note {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .records-panel {
@@ -399,6 +426,23 @@ td.actions {
   gap: 8px;
 }
 
+.calendar-button {
+  min-width: 46px;
+  height: 34px;
+  border: 0;
+  border-radius: 7px;
+  background: #e7f6ef;
+  color: var(--safe);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.calendar-button:hover {
+  background: var(--safe);
+  color: white;
+}
+
 .icon-button {
   display: inline-grid;
   place-items: center;
@@ -445,7 +489,7 @@ td.actions {
 
 @media (max-width: 900px) {
   .app-shell {
-    padding: 18px;
+    padding: 112px 18px 18px;
   }
 
   .topbar,
@@ -453,8 +497,10 @@ td.actions {
     display: grid;
   }
 
-  .reminder-banner {
+  .urgent-reminder {
+    align-items: stretch;
     display: grid;
+    min-height: 92px;
   }
 
   .workspace {
