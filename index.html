@@ -43,6 +43,38 @@
         </div>
       </section>
 
+      <section class="next-card hidden" id="nextCard" aria-live="polite">
+        <div class="next-card-head">
+          <span>最近提醒</span>
+          <strong id="nextDaysLeft">-</strong>
+        </div>
+        <div class="next-card-main">
+          <div>
+            <p class="next-phone" id="nextPhone">-</p>
+            <p class="next-meta" id="nextMeta">-</p>
+          </div>
+          <button class="urgent-button" type="button" id="nextCalendarButton">加入日历</button>
+        </div>
+        <div class="next-grid">
+          <div>
+            <span>开始日</span>
+            <strong id="nextStartDate">-</strong>
+          </div>
+          <div>
+            <span>有效期</span>
+            <strong id="nextValidityDays">-</strong>
+          </div>
+          <div>
+            <span>到期日</span>
+            <strong id="nextExpiryDate">-</strong>
+          </div>
+          <div>
+            <span>提醒</span>
+            <strong id="nextReminderAt">-</strong>
+          </div>
+        </div>
+      </section>
+
       <section class="workspace">
         <aside class="entry-panel" aria-label="新增或编辑电话卡">
           <form id="cardForm" autocomplete="off">

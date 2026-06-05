@@ -43,6 +43,17 @@ const importInput = document.querySelector("#importInput");
 const reminderBanner = document.querySelector("#reminderBanner");
 const reminderText = document.querySelector("#reminderText");
 const notifyButton = document.querySelector("#notifyButton");
+const nextCard = document.querySelector("#nextCard");
+const nextCalendarButton = document.querySelector("#nextCalendarButton");
+const nextDaysLeft = document.querySelector("#nextDaysLeft");
+const nextPhone = document.querySelector("#nextPhone");
+const nextMeta = document.querySelector("#nextMeta");
+const nextStartDate = document.querySelector("#nextStartDate");
+const nextValidityDays = document.querySelector("#nextValidityDays");
+const nextExpiryDate = document.querySelector("#nextExpiryDate");
+const nextReminderAt = document.querySelector("#nextReminderAt");
+
+let nextRecordId = "";
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -60,6 +71,9 @@ billingStartDate.addEventListener("change", updateExpiryFromBilling);
 validityDays.addEventListener("input", updateExpiryFromBilling);
 expiryDate.addEventListener("change", updateValidityFromExpiry);
 notifyButton.addEventListener("click", requestNotificationPermission);
+nextCalendarButton.addEventListener("click", () => {
+  if (nextRecordId) downloadCalendarReminder(nextRecordId);
+});
 
 render();
 showStartupReminder();
@@ -183,6 +197,7 @@ function updateSummary() {
   document.querySelector("#soonCount").textContent = normalized.filter((item) => getStatus(item.expiryDate).key === "soon").length;
   document.querySelector("#expiredCount").textContent = normalized.filter((item) => getStatus(item.expiryDate).key === "expired").length;
   updateReminderBanner(normalized);
+  updateNextCard(normalized);
 }
 
 function editRecord(id) {
@@ -295,6 +310,29 @@ function updateReminderBanner(items) {
   });
   const rest = due.length > 3 ? `，另有${due.length - 3}张` : "";
   reminderText.textContent = `${top.join("；")}${rest}`;
+}
+
+function updateNextCard(items) {
+  const sorted = [...items]
+    .filter((item) => item.phone && item.expiryDate)
+    .sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
+
+  nextCard.classList.toggle("hidden", sorted.length === 0);
+  if (!sorted.length) {
+    nextRecordId = "";
+    return;
+  }
+
+  const item = sorted[0];
+  const status = getStatus(item.expiryDate);
+  nextRecordId = item.id;
+  nextDaysLeft.textContent = status.key === "expired" ? status.label : `剩余${status.label}`;
+  nextPhone.textContent = item.phone;
+  nextMeta.textContent = `${item.carrier || "其他"} · ${item.purpose || "未填写用途"}`;
+  nextStartDate.textContent = formatDate(item.billingStartDate);
+  nextValidityDays.textContent = `${item.validityDays || "-"}天`;
+  nextExpiryDate.textContent = formatDate(item.expiryDate);
+  nextReminderAt.textContent = `${getReminderDateText(item)} ${item.reminderTime || "09:00"}`;
 }
 
 function showStartupReminder() {
