@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#176b87" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="保号记录" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <title>电话卡保号记录</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./icon-180.png" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="topbar" aria-label="概览">
+        <div>
+          <p class="eyebrow">SIM RETENTION</p>
+          <h1>电话卡保号记录</h1>
+        </div>
+        <div class="summary-grid" aria-live="polite">
+          <div class="summary-item">
+            <span class="summary-value" id="totalCount">0</span>
+            <span class="summary-label">总卡数</span>
+          </div>
+          <div class="summary-item warn">
+            <span class="summary-value" id="soonCount">0</span>
+            <span class="summary-label">30天内</span>
+          </div>
+          <div class="summary-item danger">
+            <span class="summary-value" id="expiredCount">0</span>
+            <span class="summary-label">已到期</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="reminder-banner hidden" id="reminderBanner" aria-live="polite">
+        <div>
+          <h2>到期提醒</h2>
+          <p id="reminderText"></p>
+        </div>
+        <button class="tool-button" type="button" id="notifyButton">开启通知</button>
+      </section>
+
+      <section class="workspace">
+        <aside class="entry-panel" aria-label="新增或编辑电话卡">
+          <form id="cardForm" autocomplete="off">
+            <input type="hidden" id="recordId" />
+            <div class="form-header">
+              <h2 id="formTitle">新增记录</h2>
+              <button class="icon-button subtle hidden" type="button" id="cancelEdit" title="取消编辑" aria-label="取消编辑">×</button>
+            </div>
+
+            <label>
+              <span>手机号</span>
+              <input id="phone" inputmode="tel" placeholder="例如 13800000000" required />
+            </label>
+
+            <label>
+              <span>运营商</span>
+              <select id="carrier">
+                <option>中国移动</option>
+                <option>中国联通</option>
+                <option>中国电信</option>
+                <option>广电</option>
+                <option>虚拟运营商</option>
+                <option>其他</option>
+              </select>
+            </label>
+
+            <label>
+              <span>计费开始日期</span>
+              <input id="billingStartDate" type="date" required />
+            </label>
+
+            <label>
+              <span>计费有效期（天）</span>
+              <input id="validityDays" inputmode="numeric" min="1" type="number" placeholder="例如 180" required />
+            </label>
+
+            <label>
+              <span>有效期到期日</span>
+              <input id="expiryDate" type="date" required />
+            </label>
+
+            <label>
+              <span>提前提醒（天）</span>
+              <input id="reminderDays" inputmode="numeric" min="0" type="number" placeholder="例如 7" value="7" />
+            </label>
+
+            <label>
+              <span>月费</span>
+              <input id="monthlyFee" inputmode="decimal" placeholder="例如 8" />
+            </label>
+
+            <label>
+              <span>用途</span>
+              <input id="purpose" placeholder="例如 银行卡 / 微信 / 备用" />
+            </label>
+
+            <label>
+              <span>备注</span>
+              <textarea id="notes" rows="4" placeholder="套餐、实名人、续费方式等"></textarea>
+            </label>
+
+            <button class="primary-button" type="submit" id="submitButton">保存记录</button>
+          </form>
+        </aside>
+
+        <section class="records-panel" aria-label="电话卡列表">
+          <div class="toolbar">
+            <div class="search-wrap">
+              <span aria-hidden="true">⌕</span>
+              <input id="searchInput" placeholder="搜索手机号、用途、备注" />
+            </div>
+            <select id="statusFilter" aria-label="状态筛选">
+              <option value="all">全部状态</option>
+              <option value="expired">已到期</option>
+              <option value="soon">30天内</option>
+              <option value="safe">正常</option>
+            </select>
+            <button class="tool-button" id="exportButton" type="button">导出</button>
+            <label class="tool-button import-button">
+              导入
+              <input id="importInput" type="file" accept="application/json" />
+            </label>
+          </div>
+
+          <div class="table-shell">
+            <table>
+              <thead>
+                <tr>
+                  <th>手机号</th>
+                  <th>运营商</th>
+                  <th>开始日</th>
+                  <th>有效期</th>
+                  <th>到期日</th>
+                  <th>剩余</th>
+                  <th>月费</th>
+                  <th>用途</th>
+                  <th class="actions-col">操作</th>
+                </tr>
+              </thead>
+              <tbody id="recordsBody"></tbody>
+            </table>
+            <div class="empty-state" id="emptyState">
+              <h2>暂无记录</h2>
+              <p>添加第一张电话卡后，这里会按到期时间排序。</p>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
